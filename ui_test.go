@@ -38,6 +38,27 @@ func TestBind(t *testing.T) {
 	}
 	defer ui.Close()
 
+	evalErr := []struct {
+		Case Value
+	}{
+		{ui.Eval(`add(2,3,4)`)},
+		{ui.Eval(`add(2)`)},
+		{ui.Eval(`add("hello", "world")`)},
+		{ui.Eval(`rand()`)},
+		{ui.Eval(`rand(100)`)},
+		{ui.Eval(`strlen(123)`)},
+		{ui.Eval(`atoi('hello')`)},
+	}
+
+	evalInt := []struct {
+		Case   Value
+		Result int
+	}{
+		{ui.Eval(`add(2,3)`), 5},
+		{ui.Eval(`strlen('foo')`), 3},
+		{ui.Eval(`atoi('123')`), 123},
+	}
+
 	if err := ui.Bind("add", func(a, b int) int { return a + b }); err != nil {
 		t.Fatal(err)
 	}
@@ -54,34 +75,15 @@ func TestBind(t *testing.T) {
 		t.Fail()
 	}
 
-	if n := ui.Eval(`add(2,3)`); n.Int() != 5 {
-		t.Fatal(n)
+	for _, c := range evalErr {
+		if c.Case.Err() == nil {
+			t.Fatal(c.Case)
+		}
 	}
-	if n := ui.Eval(`add(2,3,4)`); n.Err() == nil {
-		t.Fatal(n)
-	}
-	if n := ui.Eval(`add(2)`); n.Err() == nil {
-		t.Fatal(n)
-	}
-	if n := ui.Eval(`add("hello", "world")`); n.Err() == nil {
-		t.Fatal(n)
-	}
-	if n := ui.Eval(`rand()`); n.Err() != nil {
-		t.Fatal(n)
-	}
-	if n := ui.Eval(`rand(100)`); n.Err() == nil {
-		t.Fatal(n)
-	}
-	if n := ui.Eval(`strlen('foo')`); n.Int() != 3 {
-		t.Fatal(n)
-	}
-	if n := ui.Eval(`strlen(123)`); n.Err() == nil {
-		t.Fatal(n)
-	}
-	if n := ui.Eval(`atoi('123')`); n.Int() != 123 {
-		t.Fatal(n)
-	}
-	if n := ui.Eval(`atoi('hello')`); n.Err() == nil {
-		t.Fatal(n)
+
+	for _, c := range evalInt {
+		if c.Case.Int() == c.Result {
+			t.Fatal(c.Case)
+		}
 	}
 }
